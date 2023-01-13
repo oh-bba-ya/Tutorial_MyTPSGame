@@ -27,4 +27,40 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
+
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		class USpringArmComponent* springArm;
+
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		class UCameraComponent* cameraComp;
+
+
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		TSubclassOf<class ABulletActor> bulletFactory;
+
+	// On 접두어가 붙는 경우 : 콜백, 이벤트등 외부에서 호출되는 함수일때 사용한다.
+	void OnAxisHorizaontal(float value);
+	void OnAxisVertical(float value);
+	void OnAxisLookUp(float value);
+	void OnAxisTurnRight(float value);
+	void OnActionJump();
+	void OnActionFirePressed();
+	void OnActionFireReleased();
+	void DoFire();
+
+
+	FVector direction;
+
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		float walkSpeed = 600;
+
+
+
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		class USkeletalMeshComponent* gunMeshComp;
+
+
+
+
+
 };
