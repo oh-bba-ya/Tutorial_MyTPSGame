@@ -31,7 +31,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = PlayerSettings)
 		class USpringArmComponent* springArm;
 
-	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = PlayerSettings)
 		class UCameraComponent* cameraComp;
 
 
@@ -56,10 +56,14 @@ public:
 
 
 
-	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+	UPROPERTY(EditAnywhere,BlueprintReadOnly ,Category = PlayerSettings)
 		class USkeletalMeshComponent* gunMeshComp;
 
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+	float fireInterval = 0.5f;
 
+
+	FTimerHandle fireTimerHandle;
 
 
 

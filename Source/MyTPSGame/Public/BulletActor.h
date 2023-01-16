@@ -32,4 +32,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = BulletSettings)
 		class UProjectileMovementComponent* movementComp;
 
+	UFUNCTION()
+		void OnDie();
+
 };

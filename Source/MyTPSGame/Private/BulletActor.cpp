@@ -46,6 +46,25 @@ void ABulletActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	FTimerHandle dieTimerHandle;
+	//GetWorld()->GetTimerManager().SetTimer(dieTimerHandle, this, &ABulletActor::OnDie, 0.5f);
+	
+	// Lambda 함수
+	// 캡처
+	/*
+	auto myPlus = [캡처]함수의매개변수->구현
+	*/
+
+	/*
+	auto myPlus = [this](int a, int b)->int {return a + b; };
+	UE_LOG(LogTemp, Warning, TEXT("SUM : %d"), myPlus(10, 20));
+	*/
+
+
+	// 람다 사용
+	GetWorld()->GetTimerManager().SetTimer(dieTimerHandle, FTimerDelegate::CreateLambda([this]()->void {this->Destroy(); }), 2, false);
+
+
 }
 
 // Called every frame
@@ -53,5 +72,10 @@ void ABulletActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ABulletActor::OnDie()
+{
+	Destroy();
 }
 

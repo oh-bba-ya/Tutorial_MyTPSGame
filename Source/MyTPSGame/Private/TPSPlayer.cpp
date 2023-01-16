@@ -70,7 +70,6 @@ ATPSPlayer::ATPSPlayer()
 void ATPSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-	
 
 }
 
@@ -139,11 +138,14 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
+	GetWorld()->GetTimerManager().SetTimer(fireTimerHandle, this, &ATPSPlayer::DoFire, fireInterval,true);
+
 	DoFire();
 }
 
 void ATPSPlayer::OnActionFireReleased()
 {
+	GetWorld()->GetTimerManager().ClearTimer(fireTimerHandle);
 }
 
 void ATPSPlayer::DoFire()
@@ -151,6 +153,8 @@ void ATPSPlayer::DoFire()
 	// SpawnActor
 
 	FTransform t = gunMeshComp->GetSocketTransform(TEXT("FirePosition"));
+	
+	t.SetRotation(FQuat(GetControlRotation()));
 
 	GetWorld()->SpawnActor<ABulletActor>(bulletFactory, t);
 
