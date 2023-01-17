@@ -59,11 +59,48 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadOnly ,Category = PlayerSettings)
 		class USkeletalMeshComponent* gunMeshComp;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = PlayerSettings)
+		class UStaticMeshComponent* sniperMeshComp;
+
+
 	UPROPERTY(EditAnywhere, Category = PlayerSettings)
 	float fireInterval = 0.5f;
 
 
 	FTimerHandle fireTimerHandle;
+
+
+	// 총기 변환 bool
+	bool bChooseGrenadeGun;
+
+
+	void ChooseGun(bool bGrenade);
+
+	// 위제공장에서 위젯을 생성하고 싶다. Crosshair, Sniper
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		TSubclassOf<class UUserWidget> corsshairFactory;
+
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		TSubclassOf<class UUserWidget> sniperFactory;
+
+
+	// TsubclassOf를 통해 블루프린트를 불러와서 넣어줘야 하기 때문에 
+	// 반드시 UPROPERTY 매크로를 작성 해야한다. (런타임(언리얼 실행)에 언리얼에게 노출시켜야 하기 때문)
+	UPROPERTY()
+	class UUserWidget* crossHairUI;
+
+	UPROPERTY()
+	class UUserWidget* sniperUI;
+
+
+
+	// 1번키와 2번키에 대한 (총교체)입력처리를 하고싶다.
+	void OnActionGrenade();
+	void OnActionSniper();
+
+	// Zoom in , Zoom out 구현
+	void OnActionZoomIn();
+	void OnActionZoomOut();
 
 
 
