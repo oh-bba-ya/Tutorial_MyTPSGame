@@ -8,6 +8,7 @@
 #include "BulletActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
 
 
 // Sets default values
@@ -174,9 +175,47 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
-	GetWorld()->GetTimerManager().SetTimer(fireTimerHandle, this, &ATPSPlayer::DoFire, fireInterval,true);
+	// 기본총
+	if (bChooseGrenadeGun) {
+		GetWorld()->GetTimerManager().SetTimer(fireTimerHandle, this, &ATPSPlayer::DoFire, fireInterval,true);
 
-	DoFire();
+		DoFire();
+	}
+	else { // 기본총이 아니라면
+		FHitResult hitInfo;
+		FVector start = cameraComp->GetComponentLocation();
+		FVector end = cameraComp->GetForwardVector() * 100000;
+		FCollisionQueryParams param;
+		
+		// 가장 작은 단위 Actor , 나 자신은 충돌정보에서 제외
+		param.AddIgnoredActor(this);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, start, end,
+			ECollisionChannel::ECC_Visibility, param);
+
+		if (bHit) {
+			// LineTrace를 쏴서 부딪힌 위치
+			FTransform trans(hitInfo.ImpactPoint);
+			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), bulletImpactFactory, trans);
+
+
+			// 부딪힌 물체가 물리 작용을 하고 있다면
+			auto hitComp = hitInfo.GetComponent();
+			if (hitComp != nullptr && hitComp->IsSimulatingPhysics()) {
+				// 날라가는 방향 = 물체가 발사한 방향
+				// 날라가는 방향 * 힘
+				// GetSafeNormal() vs Normilze
+				// Normilze : 원본자체를 바꿔버림 sort 메소드 같은것
+				// GetSafeNormal() : 원본은 바뀌지 않고 깊은 복사를 통해 데이터값만 복사하여 새로운 변수를 만듬
+				FVector force = (hitInfo.TraceEnd - hitInfo.TraceStart).GetSafeNormal() 
+					* 100000
+					* hitComp->GetMass();
+				
+
+				hitComp->AddForce(force);
+			}
+		}
+	}
 }
 
 void ATPSPlayer::OnActionFireReleased()

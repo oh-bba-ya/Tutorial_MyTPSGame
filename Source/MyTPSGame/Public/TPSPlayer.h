@@ -71,6 +71,7 @@ public:
 
 
 	// 총기 변환 bool
+	UPROPERTY(EditAnywhere,BlueprintReadOnly ,Category = PlayerSettings)
 	bool bChooseGrenadeGun;
 
 
@@ -101,6 +102,14 @@ public:
 	// Zoom in , Zoom out 구현
 	void OnActionZoomIn();
 	void OnActionZoomOut();
+
+
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		class UParticleSystem* bulletImpactFactory;
+
+
+
+
 
 
 
