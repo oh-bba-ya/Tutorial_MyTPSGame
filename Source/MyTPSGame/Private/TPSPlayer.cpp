@@ -9,7 +9,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
-
+#include "Enemy.h"
+#include "EnemyFSM.h"
 
 // Sets default values
 ATPSPlayer::ATPSPlayer()
@@ -197,6 +198,16 @@ void ATPSPlayer::OnActionFirePressed()
 			// LineTrace를 쏴서 부딪힌 위치
 			FTransform trans(hitInfo.ImpactPoint);
 			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), bulletImpactFactory, trans);
+
+			// 만약 부딪힌 액터가 Enemy라면
+			AEnemy* enemy = Cast<AEnemy>(hitInfo.GetActor());
+			if (enemy != nullptr) {
+				// Enemy에게 데미지를 주고 싶다.
+				UEnemyFSM* fsm =enemy->enemyFSM;			// enemyFSM : public 일경우
+				// auto fsm = enemy->GetDefaultSubobjectByName(TEXT("EnemyFSM")) // 생성한 오브젝트로도 가져올 수 있다.
+
+				fsm->OnDamageProcess(1);
+			}
 
 
 			// 부딪힌 물체가 물리 작용을 하고 있다면
