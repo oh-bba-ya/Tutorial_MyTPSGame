@@ -108,11 +108,12 @@ public:
 		class UParticleSystem* bulletImpactFactory;
 
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = AnimProperty)
+	UPROPERTY(EditDefaultsOnly, Category = PlayerSettings)
 		class UAnimMontage* fireMontageFactory;
 
 
-
+	UPROPERTY(EditDefaultsOnly, Category = PlayerSettings)
+		class USoundBase* fireSound;
 
 
 };

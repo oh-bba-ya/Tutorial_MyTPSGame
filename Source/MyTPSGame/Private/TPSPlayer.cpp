@@ -16,7 +16,7 @@
 // Sets default values
 ATPSPlayer::ATPSPlayer()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	// SKM_Quinn 경로 : /Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn'
@@ -24,14 +24,14 @@ ATPSPlayer::ATPSPlayer()
 
 
 	// 1. 외관에 해당하는 에셋을 읽어오고 싶다. (ConstructorHelpers : 생성자에서만 사용가능)
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh (TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn'"));
-	
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn'"));
+
 	// 2. 읽어 왔을 때 성공했다면
 	if (tempMesh.Succeeded()) {
 		// 3. Mesh에 적용하고 싶다.
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		// 4. Transform을 수정하고 싶다.
-		GetMesh()->SetRelativeLocationAndRotation(FVector(0,0,-90), FRotator(0,-90,0));
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -90), FRotator(0, -90, 0));
 	}
 
 	// 스프링암컴포넌트를 생성하고 싶다.
@@ -40,7 +40,7 @@ ATPSPlayer::ATPSPlayer()
 	// 스프링암을 루트 컴포넌트에 붙이고
 	springArm->SetupAttachment(RootComponent);
 
-	springArm->SetRelativeLocation(FVector(0,50,100));
+	springArm->SetRelativeLocation(FVector(0, 50, 100));
 	springArm->TargetArmLength = 250.0f;
 
 	// 카메라 컴포넌트를 생성하고 싶다.
@@ -60,12 +60,12 @@ ATPSPlayer::ATPSPlayer()
 
 	// 일반총의 컴포넌트를 생성한다.
 	gunMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMeshComponent"));
-	gunMeshComp->SetupAttachment(GetMesh(),TEXT("hand_rSocket"));
+	gunMeshComp->SetupAttachment(GetMesh(), TEXT("hand_rSocket"));
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempGunMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/FPWeapon/Mesh/SK_FPGun.SK_FPGun'"));
 
 	if (tempGunMesh.Succeeded()) {
 		gunMeshComp->SetSkeletalMesh(tempGunMesh.Object);
-		gunMeshComp->SetRelativeLocationAndRotation(FVector(-11, 4, 0),FRotator(0,110,0));
+		gunMeshComp->SetRelativeLocationAndRotation(FVector(-11, 4, 0), FRotator(0, 110, 0));
 	}
 
 	sniperMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SniperMesh"));
@@ -75,8 +75,13 @@ ATPSPlayer::ATPSPlayer()
 
 	if (tempSniper.Succeeded()) {
 		sniperMeshComp->SetStaticMesh(tempSniper.Object);
-		sniperMeshComp->SetRelativeLocationAndRotation(FVector(0,60,140), FRotator(0,0,0));
+		sniperMeshComp->SetRelativeLocationAndRotation(FVector(0, 60, 140), FRotator(0, 0, 0));
 		sniperMeshComp->SetRelativeScale3D(FVector(0.15, 0.15, 0.15));
+	}
+
+	ConstructorHelpers::FObjectFinder<USoundBase>tempFireSound(TEXT("/Script/Engine.SoundWave'/Game/SniperGun/Rifle.Rifle'"));
+	if (tempFireSound.Succeeded()) {
+		fireSound = tempFireSound.Object;
 	}
 
 }
@@ -176,12 +181,14 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
-	// PlayAnimMontage(fireMontageFactory);
-
+	// fire animation 재생
 	UTPSPlayerAnim* anim = Cast<UTPSPlayerAnim>(GetMesh()->GetAnimInstance());
 	if (anim != nullptr) {
 		anim->OnFire();
 	}
+
+	// 총 소리 재생
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(),fireSound, GetActorLocation());
 
 	// 기본총
 	if (bChooseGrenadeGun) {
