@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Enemy.h"
 #include "EnemyFSM.h"
+#include "TPSPlayerAnim.h"
 
 // Sets default values
 ATPSPlayer::ATPSPlayer()
@@ -59,17 +60,16 @@ ATPSPlayer::ATPSPlayer()
 
 	// 일반총의 컴포넌트를 생성한다.
 	gunMeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GunMeshComponent"));
-	gunMeshComp->SetupAttachment(GetMesh());
+	gunMeshComp->SetupAttachment(GetMesh(),TEXT("hand_rSocket"));
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempGunMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/FPWeapon/Mesh/SK_FPGun.SK_FPGun'"));
 
 	if (tempGunMesh.Succeeded()) {
 		gunMeshComp->SetSkeletalMesh(tempGunMesh.Object);
-		gunMeshComp->SetRelativeLocationAndRotation(FVector(0, 50, 130),FRotator(0,0,0));
+		gunMeshComp->SetRelativeLocationAndRotation(FVector(-11, 4, 0),FRotator(0,110,0));
 	}
 
-
 	sniperMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SniperMesh"));
-	sniperMeshComp->SetupAttachment(GetMesh());
+	sniperMeshComp->SetupAttachment(GetMesh(), TEXT("hand_rSocket"));
 
 	ConstructorHelpers::FObjectFinder<UStaticMesh> tempSniper(TEXT("/Script/Engine.StaticMesh'/Game/SniperGun/sniper1.sniper1'"));
 
@@ -176,6 +176,13 @@ void ATPSPlayer::OnActionJump()
 
 void ATPSPlayer::OnActionFirePressed()
 {
+	// PlayAnimMontage(fireMontageFactory);
+
+	UTPSPlayerAnim* anim = Cast<UTPSPlayerAnim>(GetMesh()->GetAnimInstance());
+	if (anim != nullptr) {
+		anim->OnFire();
+	}
+
 	// 기본총
 	if (bChooseGrenadeGun) {
 		GetWorld()->GetTimerManager().SetTimer(fireTimerHandle, this, &ATPSPlayer::DoFire, fireInterval,true);

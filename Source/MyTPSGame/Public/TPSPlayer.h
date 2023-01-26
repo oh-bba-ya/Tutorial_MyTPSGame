@@ -108,6 +108,8 @@ public:
 		class UParticleSystem* bulletImpactFactory;
 
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = AnimProperty)
+		class UAnimMontage* fireMontageFactory;
 
 
 
