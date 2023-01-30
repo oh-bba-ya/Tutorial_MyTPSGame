@@ -3,6 +3,7 @@
 
 #include "Enemy.h"
 #include "EnemyFSM.h"
+#include "EnemyAnim.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -12,11 +13,17 @@ AEnemy::AEnemy()
 
 	enemyFSM = CreateDefaultSubobject<UEnemyFSM>(TEXT("EnemyFSM"));
 
-	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn'"));
+	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Enemy/Model/vampire_a_lusth.vampire_a_lusth'"));
 
 	if (tempMesh.Succeeded()) {
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -90), FRotator(0, -90, 0));
+		GetMesh()->SetRelativeScale3D(FVector(0.85f));
+	}
+
+	ConstructorHelpers::FClassFinder<UAnimInstance> tempAnim(TEXT("/Script/Engine.AnimBlueprint'/Game/Blueprints/ABP_EnemyAnim.ABP_EnemyAnim_C'"));
+	if (tempAnim.Succeeded()) {
+		GetMesh()->SetAnimInstanceClass(tempAnim.Class);
 	}
 }
 
@@ -25,6 +32,7 @@ void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	enemyAnim = Cast<UEnemyAnim>(GetMesh()->GetAnimInstance());
 }
 
 // Called every frame

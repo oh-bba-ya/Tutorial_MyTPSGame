@@ -91,6 +91,8 @@ void ATPSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GetCharacterMovement()->MaxWalkSpeed = speedWalk;
+
 	crossHairUI = CreateWidget(GetWorld(), corsshairFactory);
 	sniperUI = CreateWidget(GetWorld(), sniperFactory);
 
@@ -148,7 +150,14 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	
 	// Zoom 키 바인딩
 	PlayerInputComponent->BindAction(TEXT("Zoom"), IE_Pressed, this, &ATPSPlayer::OnActionZoomIn);
+	
 	PlayerInputComponent->BindAction(TEXT("Zoom"), IE_Released, this, &ATPSPlayer::OnActionZoomOut);
+	
+	PlayerInputComponent->BindAction(TEXT("Run"), IE_Pressed, this, &ATPSPlayer::OnActionRunPressed);
+	PlayerInputComponent->BindAction(TEXT("Run"), IE_Released, this, &ATPSPlayer::OnActionRunReleased);
+
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ATPSPlayer::OnActionCrouchPressed);
+	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ATPSPlayer::OnActionCrouchReleased);
 
 }
 
@@ -179,8 +188,39 @@ void ATPSPlayer::OnActionJump()
 	Jump();
 }
 
+void ATPSPlayer::OnActionRunPressed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = speedRun;
+}
+
+void ATPSPlayer::OnActionRunReleased()
+{
+	GetCharacterMovement()->MaxWalkSpeed = speedWalk;
+}
+
+void ATPSPlayer::OnActionCrouchPressed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = speedCrouch;
+}
+
+void ATPSPlayer::OnActionCrouchReleased()
+{
+	GetCharacterMovement()->MaxWalkSpeed = speedWalk;
+}
+
 void ATPSPlayer::OnActionFirePressed()
 {
+	// 카메라를 흔들고 싶다.
+	APlayerCameraManager* cameraManager  = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
+	
+	// camShakeInstance가 nullptr이 아니고 그리고 shake 중이라면
+	// 가끔 CameraShake를 적용하면 버그가 발생하는 경우가 있다. 그에 대한 방어코드이다.
+	if (camShakeInstance != nullptr && !(camShakeInstance->IsFinished())) {
+		cameraManager->StopCameraShake(camShakeInstance);
+	}
+
+	camShakeInstance = cameraManager->StartCameraShake(camShakeFactory);
+	
 	// fire animation 재생
 	UTPSPlayerAnim* anim = Cast<UTPSPlayerAnim>(GetMesh()->GetAnimInstance());
 	if (anim != nullptr) {
@@ -215,6 +255,7 @@ void ATPSPlayer::OnActionFirePressed()
 
 			// 만약 부딪힌 액터가 Enemy라면
 			AEnemy* enemy = Cast<AEnemy>(hitInfo.GetActor());
+
 			if (enemy != nullptr) {
 				// Enemy에게 데미지를 주고 싶다.
 				UEnemyFSM* fsm =enemy->enemyFSM;			// enemyFSM : public 일경우

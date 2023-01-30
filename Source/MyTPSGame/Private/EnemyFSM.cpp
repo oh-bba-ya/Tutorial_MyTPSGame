@@ -8,6 +8,8 @@
 #include "Enemy.h"
 #include "Components/CapsuleComponent.h"
 
+#include "EnemyAnim.h"
+
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
 {
@@ -39,7 +41,7 @@ void UEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	
+
 
 	switch (state) {
 	case EEnemyState::IDLE:
@@ -72,8 +74,8 @@ void UEnemyFSM::TickIdle()
 	// 2. 만약 플레이어를 찾았으면
 	if (target != nullptr) {
 		// 3. 이동으로 전이하고 싶다.
-		state = EEnemyState::MOVE;
-
+		// state = EEnemyState::MOVE; <- 기존 코드
+		SetState(EEnemyState::MOVE); // SetState 함수로 변경
 	}
 
 }
@@ -99,7 +101,8 @@ void UEnemyFSM::TickMove()
 
 	if (dist < attackRange) {
 		// 4. 공격상태로 전이하고 싶다.
-		state = EEnemyState::ATTACK;
+		//state = EEnemyState::ATTACK;  // 기존 코드 삭제
+		SetState(EEnemyState::ATTACK);
 	}
 }
 
@@ -126,7 +129,8 @@ void UEnemyFSM::TickAttack()
 		// 5. 계속 공격을 할 것인지 판단하고 싶다.
 		float dist = target->GetDistanceTo(me);
 		if (dist > attackRange) {
-			state = EEnemyState::MOVE;
+			//state = EEnemyState::MOVE;   // 기존 코드 삭제
+			SetState(EEnemyState::MOVE);
 		}
 		else {
 			currentTime = 0;
@@ -140,7 +144,8 @@ void UEnemyFSM::TickDamage()
 {
 	currentTime += GetWorld()->GetDeltaSeconds();
 	if (currentTime > 1) {
-		state = EEnemyState::MOVE;
+		//state = EEnemyState::MOVE;   // 기존 코드 삭제
+		SetState(EEnemyState::MOVE); 
 		currentTime = 0;
 	}
 }
@@ -168,14 +173,29 @@ void UEnemyFSM::OnDamageProcess(int damageValue)
 	// 체력이 0이되면
 	if (hp <= 0) {
 		// 상태가 Die로 변함
-		state = EEnemyState::DIE;
+		//state = EEnemyState::DIE;    // 기존 코드 삭제
+		SetState(EEnemyState::DIE);
 		me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else {// 그렇지 않다면
 		// Damage를 받는다.
-		state = EEnemyState::DAMAGE;
+		//state = EEnemyState::DAMAGE;   // 기존 코드 삭제
+		SetState(EEnemyState::DAMAGE);
 
 	}
 
+}
+
+
+void UEnemyFSM::SetState(EEnemyState next)
+{
+	state = next;
+	
+	// 내 본체의 EnemyAnim의 State에 내 State를 넣어주고 싶다.
+	if (me->enemyAnim != nullptr)
+	{
+		me->enemyAnim->state = this->state;
+	}
+	
 }
 

@@ -44,6 +44,15 @@ public:
 	void OnAxisLookUp(float value);
 	void OnAxisTurnRight(float value);
 	void OnActionJump();
+	void OnActionRunPressed();
+	void OnActionRunReleased();
+	void OnActionCrouchPressed();
+	void OnActionCrouchReleased();
+
+	float speedRun = 600;
+	float speedWalk = 400;
+	float speedCrouch = 200;
+
 	void OnActionFirePressed();
 	void OnActionFireReleased();
 	void DoFire();
@@ -115,5 +124,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = PlayerSettings)
 		class USoundBase* fireSound;
 
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		TSubclassOf<class UCameraShakeBase> camShakeFactory;
+
+	UPROPERTY()
+		class UCameraShakeBase* camShakeInstance;
 
 };
