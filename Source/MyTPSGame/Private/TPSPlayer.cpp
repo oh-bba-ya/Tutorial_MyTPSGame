@@ -262,6 +262,12 @@ void ATPSPlayer::OnActionFirePressed()
 				// auto fsm = enemy->GetDefaultSubobjectByName(TEXT("EnemyFSM")) // 생성한 오브젝트로도 가져올 수 있다.
 
 				fsm->OnDamageProcess(1);
+				if (FMath::RandRange(0, 100) > 50) {
+					enemy->OnMyDamage(TEXT("Damage0"));
+				}
+				else {
+					enemy->OnMyDamage(TEXT("Damage1"));
+				}
 			}
 
 
@@ -346,4 +352,5 @@ void ATPSPlayer::OnActionZoomOut()
 	sniperUI->RemoveFromParent();
 	crossHairUI->AddToViewport();
 }
+
 

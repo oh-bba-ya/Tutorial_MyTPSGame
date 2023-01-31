@@ -114,29 +114,18 @@ void UEnemyFSM::TickAttack()
 	// 1. 시간이 흐르다가
 	currentTime += GetWorld()->GetDeltaSeconds();
 
-	// 2. 현재시간이 공격시간을 초과하면
-	if (!bAttackPlay && currentTime > 0.1f) {
-		bAttackPlay = true;
-		// 3. 공격을 하고 (조건은 공격거리 안에 있는가?)
-		float dist = target->GetDistanceTo(me);
-		if (dist <= attackRange) {
-			UE_LOG(LogTemp, Warning, TEXT("Enemy Attack"));
-		}
+	if (currentTime > attackDelayTime) {
+		currentTime = 0;
+		me->enemyAnim->bAttackPlay = true;
+		UE_LOG(LogTemp, Warning, TEXT("Enemy is Attack"));
 	}
 
-	// 4. 공격동작이 끝났다면
-	if (currentTime > 2) {
-		// 5. 계속 공격을 할 것인지 판단하고 싶다.
-		float dist = target->GetDistanceTo(me);
-		if (dist > attackRange) {
-			//state = EEnemyState::MOVE;   // 기존 코드 삭제
-			SetState(EEnemyState::MOVE);
-		}
-		else {
-			currentTime = 0;
-			bAttackPlay = false;
-		}
+	float dist = target->GetDistanceTo(me);
+	if (dist > attackRange) {
+		SetState(EEnemyState::MOVE);
 	}
+
+
 }
 
 // player->Enemy 공격
@@ -173,13 +162,11 @@ void UEnemyFSM::OnDamageProcess(int damageValue)
 	// 체력이 0이되면
 	if (hp <= 0) {
 		// 상태가 Die로 변함
-		//state = EEnemyState::DIE;    // 기존 코드 삭제
 		SetState(EEnemyState::DIE);
 		me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else {// 그렇지 않다면
 		// Damage를 받는다.
-		//state = EEnemyState::DAMAGE;   // 기존 코드 삭제
 		SetState(EEnemyState::DAMAGE);
 
 	}
@@ -197,5 +184,15 @@ void UEnemyFSM::SetState(EEnemyState next)
 		me->enemyAnim->state = this->state;
 	}
 	
+}
+
+void UEnemyFSM::OnHitEvent()
+{
+	me->enemyAnim->bAttackPlay = false;
+
+	float dist = target->GetDistanceTo(me);
+	if (dist <= attackRange) {
+		UE_LOG(LogTemp,Warning, TEXT("Enemy is Attack"));
+	}
 }
 

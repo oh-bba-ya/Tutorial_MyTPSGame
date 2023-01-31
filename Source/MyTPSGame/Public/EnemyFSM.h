@@ -46,7 +46,7 @@ public:
 
 	float currentTime = 0;
 
-	bool bAttackPlay = false;
+	float attackDelayTime = 3;
 
 	void TickIdle();
 	void TickMove();
@@ -59,7 +59,8 @@ public:
 	int maxHP = 2;
 	void OnDamageProcess(int damageValue);  // CallBack , 함수 , 이벤트 함수
 
-
 	void SetState(EEnemyState next);
+
+	void OnHitEvent();
 
 };
