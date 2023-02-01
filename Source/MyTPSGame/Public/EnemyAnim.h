@@ -33,5 +33,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void OnEndAttackAnimation();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		bool bEnemyDieEnd;
 	
 };

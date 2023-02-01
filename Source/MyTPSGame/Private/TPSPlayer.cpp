@@ -262,12 +262,15 @@ void ATPSPlayer::OnActionFirePressed()
 				// auto fsm = enemy->GetDefaultSubobjectByName(TEXT("EnemyFSM")) // 생성한 오브젝트로도 가져올 수 있다.
 
 				fsm->OnDamageProcess(1);
+				/*
+				*  다음 코드  EnemyFSM으로 이동
 				if (FMath::RandRange(0, 100) > 50) {
 					enemy->OnMyDamage(TEXT("Damage0"));
 				}
 				else {
 					enemy->OnMyDamage(TEXT("Damage1"));
 				}
+				*/
 			}
 
 

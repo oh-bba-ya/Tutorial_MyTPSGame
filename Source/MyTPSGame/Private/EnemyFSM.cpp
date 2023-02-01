@@ -7,7 +7,7 @@
 #include "TPSPlayer.h"
 #include "Enemy.h"
 #include "Components/CapsuleComponent.h"
-
+#include "AIController.h"
 #include "EnemyAnim.h"
 
 // Sets default values for this component's properties
@@ -32,6 +32,9 @@ void UEnemyFSM::BeginPlay()
 	me = Cast<AEnemy>(GetOwner());
 
 	hp = maxHP;
+
+	// 캐싱
+	ai = Cast<AAIController>(me->GetController());
 	
 }
 
@@ -92,7 +95,10 @@ void UEnemyFSM::TickMove()
 	FVector dir = target->GetActorLocation() - me->GetActorLocation();   // 계속 사용할것이기 때문에 me 변수에 캐싱함
 
 	// 2. 그 방향으로 이동하고 싶다.
-	me->AddMovementInput(dir.GetSafeNormal());
+	ai->MoveToLocation(target->GetActorLocation());
+
+	// me->AddMovementInput(dir.GetSafeNormal()); <- 기존 코드 삭제
+
 
 	// 3. 목적지와의 거리가 공격가능거리라면
 	//float dist = target->GetDistanceTo(me);
@@ -141,6 +147,11 @@ void UEnemyFSM::TickDamage()
 
 void UEnemyFSM::TickDie()
 {
+	// 만약 넘어지는 애니메이션이 끝나지 않았다면
+	if (!me->enemyAnim->bEnemyDieEnd) {
+		return ;
+	}
+
 	currentTime += GetWorld()->GetDeltaSeconds();
 
 	// P = P0 + vt 공식을 통해 적이 죽으면 땅속으로 가라앉는것을 구현해보자.
@@ -157,18 +168,31 @@ void UEnemyFSM::TickDie()
 // 플레이어에게 맞았다.
 void UEnemyFSM::OnDamageProcess(int damageValue)
 {
+	if (ai) {
+		ai->StopMovement();
+	}
+
 	// 체력을 소모하고
 	hp -= damageValue;
 	// 체력이 0이되면
 	if (hp <= 0) {
 		// 상태가 Die로 변함
+		me->enemyAnim->bEnemyDieEnd = false;
+		// 몽타주의 Die Section을 play 시키고 싶다.
+		me->OnMyDamage(TEXT("Die"));
 		SetState(EEnemyState::DIE);
 		me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
 	}
 	else {// 그렇지 않다면
 		// Damage를 받는다.
 		SetState(EEnemyState::DAMAGE);
-
+		if (FMath::RandRange(0, 100) > 50) {
+			me->OnMyDamage(TEXT("Damage0"));
+		}
+		else {
+			me->OnMyDamage(TEXT("Damage1"));
+		}
 	}
 
 }
@@ -183,6 +207,8 @@ void UEnemyFSM::SetState(EEnemyState next)
 	{
 		me->enemyAnim->state = this->state;
 	}
+
+	currentTime = 0;
 	
 }
 

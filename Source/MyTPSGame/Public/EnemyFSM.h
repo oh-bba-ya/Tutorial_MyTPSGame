@@ -48,6 +48,7 @@ public:
 
 	float attackDelayTime = 3;
 
+
 	void TickIdle();
 	void TickMove();
 	void TickAttack();
@@ -62,5 +63,7 @@ public:
 	void SetState(EEnemyState next);
 
 	void OnHitEvent();
+
+	class AAIController* ai;
 
 };
