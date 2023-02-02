@@ -9,6 +9,7 @@
 #include "Components/CapsuleComponent.h"
 #include "AIController.h"
 #include "EnemyAnim.h"
+#include "NavigationSystem.h"
 
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
@@ -31,11 +32,16 @@ void UEnemyFSM::BeginPlay()
 	// me를 찾아주자.
 	me = Cast<AEnemy>(GetOwner());
 
-	hp = maxHP;
+	me->hp = me->maxHP;
 
 	// 캐싱
 	ai = Cast<AAIController>(me->GetController());
-	
+	if (ai == nullptr) {
+		UE_LOG(LogTemp, Warning, TEXT("NULL"));
+	}
+
+	// 태어날때 Random 목적지를 초기화하고 싶다.
+	UpdateRandomLocation(randLocationRadius, randomLocation);
 }
 
 
@@ -94,10 +100,33 @@ void UEnemyFSM::TickMove()
 	//FVector dir = target->GetActorLocation() - GetOwner();
 	FVector dir = target->GetActorLocation() - me->GetActorLocation();   // 계속 사용할것이기 때문에 me 변수에 캐싱함
 
-	// 2. 그 방향으로 이동하고 싶다.
-	ai->MoveToLocation(target->GetActorLocation());
 
-	// me->AddMovementInput(dir.GetSafeNormal()); <- 기존 코드 삭제
+	// A. 내가 갈 수 있는 길위에 target이 있는가?
+	UNavigationSystemV1* ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+
+	FPathFindingQuery query;
+	FAIMoveRequest request;
+	request.SetGoalLocation(target->GetActorLocation());
+	request.SetAcceptanceRadius(5);
+	ai->BuildPathfindingQuery(request, query);
+
+	FPathFindingResult result = ns->FindPathSync(query);
+	
+	// B. 갈 수 있다면 Target으로 이동
+	if (result.Result == ENavigationQueryResult::Success) {
+		// 2. 그 방향으로 이동하고 싶다.
+		ai->MoveToLocation(target->GetActorLocation());
+	}
+	else {
+
+		// C. 그렇지 않다면 무작위로 위치를 하나 선정에서 그곳으로 가고 싶다.
+		auto r = ai->MoveToLocation(randomLocation);
+
+		if (r == EPathFollowingRequestResult::AlreadyAtGoal || r == EPathFollowingRequestResult::AlreadyAtGoal) {
+			// D. 만약 위치에 도착했다면 다시 무작위로 위치를 재선정하고 싶다.
+			UpdateRandomLocation(randLocationRadius, randomLocation);
+		}
+	}
 
 
 	// 3. 목적지와의 거리가 공격가능거리라면
@@ -107,7 +136,6 @@ void UEnemyFSM::TickMove()
 
 	if (dist < attackRange) {
 		// 4. 공격상태로 전이하고 싶다.
-		//state = EEnemyState::ATTACK;  // 기존 코드 삭제
 		SetState(EEnemyState::ATTACK);
 	}
 }
@@ -168,14 +196,14 @@ void UEnemyFSM::TickDie()
 // 플레이어에게 맞았다.
 void UEnemyFSM::OnDamageProcess(int damageValue)
 {
-	if (ai) {
+	if (ai != nullptr) {
 		ai->StopMovement();
 	}
 
 	// 체력을 소모하고
-	hp -= damageValue;
+	me->hp -= damageValue;
 	// 체력이 0이되면
-	if (hp <= 0) {
+	if (me->hp <= 0) {
 		// 상태가 Die로 변함
 		me->enemyAnim->bEnemyDieEnd = false;
 		// 몽타주의 Die Section을 play 시키고 싶다.
@@ -220,5 +248,19 @@ void UEnemyFSM::OnHitEvent()
 	if (dist <= attackRange) {
 		UE_LOG(LogTemp,Warning, TEXT("Enemy is Attack"));
 	}
+}
+
+bool UEnemyFSM::UpdateRandomLocation(float radius, FVector& outLocation)
+{
+	UNavigationSystemV1* ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+
+	FNavLocation navLoc;
+	bool result = ns->GetRandomReachablePointInRadius(me->GetActorLocation(), radius, navLoc);
+	if (result){
+		outLocation = navLoc.Location;
+	}
+
+	return result;
+
 }
 

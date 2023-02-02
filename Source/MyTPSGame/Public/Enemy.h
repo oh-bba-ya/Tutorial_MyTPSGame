@@ -39,4 +39,11 @@ public:
 		void OnMyDamage(FName sectionName);
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int hp;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	int maxHP = 2;
+
+
 };

@@ -32,6 +32,8 @@ void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
 	
+
+
 	enemyAnim = Cast<UEnemyAnim>(GetMesh()->GetAnimInstance());
 }
 

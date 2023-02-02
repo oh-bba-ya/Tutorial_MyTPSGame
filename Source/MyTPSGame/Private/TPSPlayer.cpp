@@ -261,6 +261,7 @@ void ATPSPlayer::OnActionFirePressed()
 				UEnemyFSM* fsm =enemy->enemyFSM;			// enemyFSM : public 일경우
 				// auto fsm = enemy->GetDefaultSubobjectByName(TEXT("EnemyFSM")) // 생성한 오브젝트로도 가져올 수 있다.
 
+				UE_LOG(LogTemp, Warning, TEXT("Dama"));
 				fsm->OnDamageProcess(1);
 				/*
 				*  다음 코드  EnemyFSM으로 이동
