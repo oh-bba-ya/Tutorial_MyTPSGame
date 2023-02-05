@@ -10,6 +10,7 @@
 #include "AIController.h"
 #include "EnemyAnim.h"
 #include "NavigationSystem.h"
+#include "PathManager.h"
 
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
@@ -28,6 +29,7 @@ void UEnemyFSM::BeginPlay()
 	Super::BeginPlay();
 	
 	state = EEnemyState::IDLE;
+	moveSubState = EEnemyMoveSubState::PATROL;
 
 	// me를 찾아주자.
 	me = Cast<AEnemy>(GetOwner());
@@ -42,6 +44,10 @@ void UEnemyFSM::BeginPlay()
 
 	// 태어날때 Random 목적지를 초기화하고 싶다.
 	UpdateRandomLocation(randLocationRadius, randomLocation);
+
+	// 레벨에 존재하는 pathManger를 찾고싶다.
+	pathManager = Cast<APathManager>(UGameplayStatics::GetActorOfClass(GetWorld(), APathManager::StaticClass()));
+
 }
 
 
@@ -95,39 +101,24 @@ void UEnemyFSM::TickIdle()
 // 공격상태로 전이하고 싶다.
 void UEnemyFSM::TickMove()
 {
+
+	switch (moveSubState)
+	{
+	case EEnemyMoveSubState::PATROL: 
+		TickPatrol();
+		break;
+	case EEnemyMoveSubState::CHASE: 
+		TickChase();
+		break;
+	case EEnemyMoveSubState::OLD_MOVE: 
+		TickMoveOldMove();
+		break;
+	}
+
 	// 1. 목적지를 향하는 방향을 만들고
 	// GetOwner() : ActorComponent 클래스를 소유한 클래스를 가리킴
 	//FVector dir = target->GetActorLocation() - GetOwner();
 	FVector dir = target->GetActorLocation() - me->GetActorLocation();   // 계속 사용할것이기 때문에 me 변수에 캐싱함
-
-
-	// A. 내가 갈 수 있는 길위에 target이 있는가?
-	UNavigationSystemV1* ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
-
-	FPathFindingQuery query;
-	FAIMoveRequest request;
-	request.SetGoalLocation(target->GetActorLocation());
-	request.SetAcceptanceRadius(5);
-	ai->BuildPathfindingQuery(request, query);
-
-	FPathFindingResult result = ns->FindPathSync(query);
-	
-	// B. 갈 수 있다면 Target으로 이동
-	if (result.Result == ENavigationQueryResult::Success) {
-		// 2. 그 방향으로 이동하고 싶다.
-		ai->MoveToLocation(target->GetActorLocation());
-	}
-	else {
-
-		// C. 그렇지 않다면 무작위로 위치를 하나 선정에서 그곳으로 가고 싶다.
-		auto r = ai->MoveToLocation(randomLocation);
-
-		if (r == EPathFollowingRequestResult::AlreadyAtGoal || r == EPathFollowingRequestResult::AlreadyAtGoal) {
-			// D. 만약 위치에 도착했다면 다시 무작위로 위치를 재선정하고 싶다.
-			UpdateRandomLocation(randLocationRadius, randomLocation);
-		}
-	}
-
 
 	// 3. 목적지와의 거리가 공격가능거리라면
 	//float dist = target->GetDistanceTo(me);
@@ -138,6 +129,7 @@ void UEnemyFSM::TickMove()
 		// 4. 공격상태로 전이하고 싶다.
 		SetState(EEnemyState::ATTACK);
 	}
+	
 }
 
 // 공격 타이밍 
@@ -191,6 +183,76 @@ void UEnemyFSM::TickDie()
 	if (currentTime > 1) {
 		me->Destroy();
 	}
+}
+
+void UEnemyFSM::TickMoveOldMove()
+{
+	// 1. 목적지를 향하는 방향을 만들고
+	// GetOwner() : ActorComponent 클래스를 소유한 클래스를 가리킴
+	//FVector dir = target->GetActorLocation() - GetOwner();
+	FVector dir = target->GetActorLocation() - me->GetActorLocation();   // 계속 사용할것이기 때문에 me 변수에 캐싱함
+
+
+	// A. 내가 갈 수 있는 길위에 target이 있는가?
+	UNavigationSystemV1* ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+
+	FPathFindingQuery query;
+	FAIMoveRequest request;
+	request.SetGoalLocation(target->GetActorLocation());
+	request.SetAcceptanceRadius(5);
+	ai->BuildPathfindingQuery(request, query);
+
+	FPathFindingResult result = ns->FindPathSync(query);
+
+	// B. 갈 수 있다면 Target으로 이동
+	if (result.Result == ENavigationQueryResult::Success) {
+		// 2. 그 방향으로 이동하고 싶다.
+		ai->MoveToLocation(target->GetActorLocation());
+	}
+	else {
+
+		// C. 그렇지 않다면 무작위로 위치를 하나 선정에서 그곳으로 가고 싶다.
+		auto r = ai->MoveToLocation(randomLocation);
+
+		if (r == EPathFollowingRequestResult::AlreadyAtGoal || r == EPathFollowingRequestResult::Failed) {
+			// D. 만약 위치에 도착했다면 다시 무작위로 위치를 재선정하고 싶다.
+			UpdateRandomLocation(randLocationRadius, randomLocation);
+		}
+	}
+
+
+}
+
+// 순찰할 위치를 순서대로 이동하고 싶다.
+void UEnemyFSM::TickPatrol()
+{
+	FVector patrolTarget = pathManager->waypoints[wayIndex]->GetActorLocation();
+
+	//UE_LOG(LogTemp, Warning, TEXT("name : %s"),*way);
+
+	ai->MoveToLocation(patrolTarget);
+	
+	// 만약 순찰위치에 도착했다면
+	auto result = ai->MoveToLocation(patrolTarget);
+	if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed) {
+		// 순찰할 위치를 다음위치로 갱신하고 싶다.
+		int arrayLength = pathManager->waypoints.Num();
+		
+		// wayIndedx의 값이 pathManager->waypoints의 크기 이상이면
+		// 순방향
+		//wayIndex = (wayIndex + 1) % arrayLength;
+
+		// 역방향
+		wayIndex = (wayIndex + arrayLength - 1) % arrayLength;
+		UE_LOG(LogTemp, Warning, TEXT("wayIndex : %d"), wayIndex);
+	}
+
+}
+
+// 
+void UEnemyFSM::TickChase()
+{
+
 }
 
 // 플레이어에게 맞았다.

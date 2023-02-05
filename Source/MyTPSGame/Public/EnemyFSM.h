@@ -16,6 +16,14 @@ enum class EEnemyState : uint8 //0 ~ 255
 	DIE
 };
 
+UENUM(BlueprintType)
+enum class EEnemyMoveSubState : uint8 
+{
+	PATROL,
+	CHASE,
+	OLD_MOVE
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class MYTPSGAME_API UEnemyFSM : public UActorComponent
 {
@@ -35,6 +43,9 @@ public:
 
 		
 	EEnemyState state;
+
+	EEnemyMoveSubState moveSubState;
+
 	class ATPSPlayer* target;			// caching
 	
 	class AEnemy* me;		// Getowner : caching
@@ -54,6 +65,9 @@ public:
 	void TickAttack();
 	void TickDamage();
 	void TickDie();
+	void TickMoveOldMove();
+	void TickPatrol();
+	void TickChase();
 
 
 	void OnDamageProcess(int damageValue);  // CallBack , 함수 , 이벤트 함수
@@ -70,5 +84,13 @@ public:
 	FVector randomLocation;
 
 	bool UpdateRandomLocation(float radius, FVector& outLocation);
+
+	// PathManager를 알고싶다.
+	UPROPERTY()
+	class APathManager* pathManager;
+
+	// PathManager의 waypoints를 이용해서 순찰할 목적지를 정하고 싶다.
+	int wayIndex;
+
 
 };
