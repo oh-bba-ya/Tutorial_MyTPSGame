@@ -24,6 +24,9 @@ public:
 		float rightVelocity;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = AnimProperty)
 		bool isInAir;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AnimProperty)
+		bool isCrouching;
+
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = AnimProperty)
 		class UAnimMontage* fireMontageFactory;

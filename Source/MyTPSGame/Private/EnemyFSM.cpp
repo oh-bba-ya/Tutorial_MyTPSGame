@@ -11,6 +11,7 @@
 #include "EnemyAnim.h"
 #include "NavigationSystem.h"
 #include "PathManager.h"
+#include "MyTPSGame/MyTPSGameGameModeBase.h"
 
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
@@ -230,8 +231,13 @@ void UEnemyFSM::TickPatrol()
 
 	//UE_LOG(LogTemp, Warning, TEXT("name : %s"),*way);
 
+
 	ai->MoveToLocation(patrolTarget);
 	
+	if (ai == nullptr) {
+		return;
+	}
+
 	// 만약 순찰위치에 도착했다면
 	auto result = ai->MoveToLocation(patrolTarget);
 	if (result == EPathFollowingRequestResult::AlreadyAtGoal || result == EPathFollowingRequestResult::Failed) {
@@ -247,11 +253,27 @@ void UEnemyFSM::TickPatrol()
 		UE_LOG(LogTemp, Warning, TEXT("wayIndex : %d"), wayIndex);
 	}
 
+	float dist = me->GetDistanceTo(target);
+	if (dist <= detectDistnace) {
+		moveSubState = EEnemyMoveSubState::CHASE;
+	}
+
 }
 
 // 
 void UEnemyFSM::TickChase()
 {
+	float dist = me->GetDistanceTo(target);
+	FVector dir = target->GetActorLocation() - me->GetActorLocation();
+
+	ai->MoveToLocation(target->GetActorLocation());
+
+	if (dist > detectDistnace) {
+		moveSubState = EEnemyMoveSubState::PATROL;
+	}
+	else if (dist <= attackRange) {
+		state = EEnemyState::ATTACK;
+	}
 
 }
 
@@ -266,12 +288,16 @@ void UEnemyFSM::OnDamageProcess(int damageValue)
 	me->hp -= damageValue;
 	// 체력이 0이되면
 	if (me->hp <= 0) {
+		me->hp = 0;
 		// 상태가 Die로 변함
 		me->enemyAnim->bEnemyDieEnd = false;
 		// 몽타주의 Die Section을 play 시키고 싶다.
 		me->OnMyDamage(TEXT("Die"));
 		SetState(EEnemyState::DIE);
 		me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+		// 게임모드의 AddExp함수를 호출한다.
+		Cast<AMyTPSGameGameModeBase>(GetWorld()->GetAuthGameMode())->AddExp(1);
 	
 	}
 	else {// 그렇지 않다면

@@ -92,5 +92,7 @@ public:
 	// PathManager의 waypoints를 이용해서 순찰할 목적지를 정하고 싶다.
 	int wayIndex;
 
+	float detectDistnace = 600;
+
 
 };

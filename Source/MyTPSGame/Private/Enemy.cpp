@@ -13,6 +13,8 @@ AEnemy::AEnemy()
 
 	enemyFSM = CreateDefaultSubobject<UEnemyFSM>(TEXT("EnemyFSM"));
 
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> tempMesh(TEXT("/Script/Engine.SkeletalMesh'/Game/Enemy/Model/vampire_a_lusth.vampire_a_lusth'"));
 
 	if (tempMesh.Succeeded()) {
