@@ -12,6 +12,7 @@
 #include "Enemy.h"
 #include "EnemyFSM.h"
 #include "TPSPlayerAnim.h"
+#include "TPSPlayerMoveComponent.h"
 
 // Sets default values
 ATPSPlayer::ATPSPlayer()
@@ -84,6 +85,9 @@ ATPSPlayer::ATPSPlayer()
 		fireSound = tempFireSound.Object;
 	}
 
+	// 이동컴포넌트를 생성하고 싶다.
+	moveComp = CreateDefaultSubobject<UTPSPlayerMoveComponent>(TEXT("MoveComp"));
+
 }
 
 // Called when the game starts or when spawned
@@ -91,7 +95,6 @@ void ATPSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetCharacterMovement()->MaxWalkSpeed = speedWalk;
 
 	crossHairUI = CreateWidget(GetWorld(), corsshairFactory);
 	sniperUI = CreateWidget(GetWorld(), sniperFactory);
@@ -115,18 +118,6 @@ void ATPSPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// direction 방향으로 이동하고 싶다.
-	
-	FTransform trans(GetControlRotation());
-	FVector resultDirection = trans.TransformVector(direction);
-
-	resultDirection.Z = 0;
-	resultDirection.Normalize();
-
-	AddMovementInput(resultDirection);
-
-	//direction = FVector::ZeroVector;
-
 }
 
 // Called to bind functionality to input
@@ -134,11 +125,9 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis(TEXT("Horizontal"), this, &ATPSPlayer::OnAxisHorizaontal);
-	PlayerInputComponent->BindAxis(TEXT("Vertical"), this, &ATPSPlayer::OnAxisVertical);
-	PlayerInputComponent->BindAxis(TEXT("Look Up"), this, &ATPSPlayer::OnAxisLookUp);
-	PlayerInputComponent->BindAxis(TEXT("Turn Right"), this, &ATPSPlayer::OnAxisTurnRight);
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ATPSPlayer::OnActionJump);
+	//moveComp->SetupPlayerInput(PlayerInputComponent);
+
+	setupInputDelegate.Broadcast(PlayerInputComponent);
 
 	// IE_Repeat 누르고 있는동안 나간다. (너무나 빠른 속도로 나가기 때문에 Pressed , Released를 통해 연사를 구현한다.)
 	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ATPSPlayer::OnActionFirePressed);
@@ -153,63 +142,10 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 	
 	PlayerInputComponent->BindAction(TEXT("Zoom"), IE_Released, this, &ATPSPlayer::OnActionZoomOut);
 	
-	PlayerInputComponent->BindAction(TEXT("Run"), IE_Pressed, this, &ATPSPlayer::OnActionRunPressed);
-	PlayerInputComponent->BindAction(TEXT("Run"), IE_Released, this, &ATPSPlayer::OnActionRunReleased);
-
-	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Pressed, this, &ATPSPlayer::OnActionCrouchPressed);
-	PlayerInputComponent->BindAction(TEXT("Crouch"), IE_Released, this, &ATPSPlayer::OnActionCrouchReleased);
 
 }
 
-void ATPSPlayer::OnAxisHorizaontal(float value)
-{
-	direction.Y = value;
-}
 
-void ATPSPlayer::OnAxisVertical(float value)
-{
-	direction.X = value;
-}
-
-void ATPSPlayer::OnAxisLookUp(float value)
-{
-	// Pitch
-	AddControllerPitchInput(value);
-}
-
-void ATPSPlayer::OnAxisTurnRight(float value)
-{
-	// Yaw
-	AddControllerYawInput(value);
-}
-
-void ATPSPlayer::OnActionJump()
-{
-	Jump();
-}
-
-void ATPSPlayer::OnActionRunPressed()
-{
-	GetCharacterMovement()->MaxWalkSpeed = speedRun;
-}
-
-void ATPSPlayer::OnActionRunReleased()
-{
-	GetCharacterMovement()->MaxWalkSpeed = speedWalk;
-}
-
-void ATPSPlayer::OnActionCrouchPressed()
-{
-	GetCharacterMovement()->MaxWalkSpeedCrouched = speedCrouch;
-	Crouch();
-	
-}
-
-void ATPSPlayer::OnActionCrouchReleased()
-{
-	GetCharacterMovement()->MaxWalkSpeedCrouched = speedWalk;
-	UnCrouch();
-}
 
 void ATPSPlayer::OnActionFirePressed()
 {

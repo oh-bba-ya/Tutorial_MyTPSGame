@@ -6,6 +6,11 @@
 #include "GameFramework/Character.h"
 #include "TPSPlayer.generated.h"
 
+// OneParam을 추가함으로써 파라미터가 1개가 존재하는 함수를 바인딩한다는것을 알 수 있다.
+// ( Delegate 이름을 설정하고 , 파라미터 변수명은 안쓰고 자료형만 작성해도된다. )
+DECLARE_MULTICAST_DELEGATE_OneParam(FSetupInputDelegate, class UInputComponent*)
+
+
 UCLASS()
 class MYTPSGAME_API ATPSPlayer : public ACharacter
 {
@@ -27,6 +32,11 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 
+	UPROPERTY(EditAnywhere)
+		class UTPSPlayerMoveComponent* moveComp;
+
+
+
 
 	UPROPERTY(EditAnywhere, Category = PlayerSettings)
 		class USpringArmComponent* springArm;
@@ -38,30 +48,12 @@ public:
 	UPROPERTY(EditAnywhere, Category = PlayerSettings)
 		TSubclassOf<class ABulletActor> bulletFactory;
 
-	// On 접두어가 붙는 경우 : 콜백, 이벤트등 외부에서 호출되는 함수일때 사용한다.
-	void OnAxisHorizaontal(float value);
-	void OnAxisVertical(float value);
-	void OnAxisLookUp(float value);
-	void OnAxisTurnRight(float value);
-	void OnActionJump();
-	void OnActionRunPressed();
-	void OnActionRunReleased();
-	void OnActionCrouchPressed();
-	void OnActionCrouchReleased();
-
-	float speedRun = 600;
-	float speedWalk = 400;
-	float speedCrouch = 200;
 
 	void OnActionFirePressed();
 	void OnActionFireReleased();
 	void DoFire();
 
 
-	FVector direction;
-
-	UPROPERTY(EditAnywhere, Category = PlayerSettings)
-		float walkSpeed = 600;
 
 
 
@@ -129,5 +121,7 @@ public:
 
 	UPROPERTY()
 		class UCameraShakeBase* camShakeInstance;
+
+	FSetupInputDelegate setupInputDelegate;
 
 };
